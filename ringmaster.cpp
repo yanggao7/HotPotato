@@ -94,7 +94,7 @@ int main(int argc, char * argv[]){
             cerr << "Error: accept failed" << endl;
         }
 
-        //把player的ID和总人数发给它
+        //把player的ID和总人数发给这个player
         int player_id = i;
         //send第一个参数：目标socket_fd，第二个：数据的指针，可以发任何类型，只要接收方知道格式；第三个：数据大小（字节数）；第四个flags,通常传0
         send(player_fds[i], &player_id, sizeof(player_id), 0);

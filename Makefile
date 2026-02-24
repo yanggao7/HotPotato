@@ -1,5 +1,5 @@
 # TODO: 理解这个makefile文件
-all: ringmaster plyaer
+all: ringmaster player
 
 ringmaster: ringmaster.cpp potato.h
 	g++ -o ringmaster ringmaster.cpp
