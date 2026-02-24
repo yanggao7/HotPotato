@@ -134,9 +134,53 @@ int main(int argc, char * argv[]){
       int left_id = (player_id - 1 + num_players) % num_players;
       int right_id = (player_id + 1) % num_players;
 
-      cout << "Connected as player " << player_id
-           << " out of " << num_players << " total players" << endl;
+      cout << "Connected as player " << player_id << " out of " << num_players << " total players" << endl;
 
+      srand((unsigned int)time(NULL) + player_id);
+
+      while (true) {
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(master_fd, &read_fds);
+        FD_SET(left_fd, &read_fds);
+        FD_SET(right_fd, &read_fds);
+        
+        int max_fd = master_fd;
+        if (left_fd > max_fd) max_fd = left_fd;
+        if (right_fd > max_fd) max_fd = right_fd;
+        
+        select(max_fd + 1, &read_fds, NULL, NULL, NULL);
+        
+        Potato potato;
+        int src_fd = -1;
+        if (FD_ISSET(master_fd, &read_fds)) src_fd = master_fd;
+        else if (FD_ISSET(left_fd, &read_fds)) src_fd = left_fd;
+        else if (FD_ISSET(right_fd, &read_fds)) src_fd = right_fd;
+        
+        recv(src_fd, &potato, sizeof(potato), MSG_WAITALL);
+        
+        // hops == -1 是关闭信号
+        if (potato.hops <= 0) break;
+        
+        potato.hops--;
+        potato.trace[potato.count++] = player_id;
+        
+        if (potato.hops == 0) {
+            cout << "I'm it" << endl;
+            send(master_fd, &potato, sizeof(potato), 0);
+        } else {
+            int choice = rand() % 2; // 0=左, 1=右
+            if (choice == 0) {
+            cout << "Sending potato to " << left_id << endl;
+            send(left_fd, &potato, sizeof(potato), 0);
+            } else {
+            cout << "Sending potato to " << right_id << endl;
+            send(right_fd, &potato, sizeof(potato), 0);
+            }
+      }
+    }
+
+    
 
       close(left_fd);
       close(right_fd);

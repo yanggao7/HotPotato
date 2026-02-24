@@ -118,8 +118,63 @@ int main(int argc, char * argv[]){
         send(player_fds[i], &player_ports[right], sizeof(player_ports[right]), 0);
     }
 
-    //TODO: 发 potato、等待结果、关闭
+    //传递土豆儿
 
+    srand((unsigned int)time(NULL));
+
+    if(num_hops == 0){
+        Potato shutdown;
+        shutdown.hops = -1;
+        for(int i = 0; i < num_players; i++){
+            send(player_fds[i], & shutdown, sizeof(shutdown), 0);
+        }
+    }else{
+        Potato potato;
+        memset(&potato, 0, sizeof(potato));
+        potato.hops = num_hops;
+        potato.count = 0;
+
+
+        int first = rand() % num_players;
+        cout << "Ready to start the game, sending potato to player " << first << endl;
+        send(player_fds[first], &potato, sizeof(potato), 0);
+
+        //select()等待某个player把potato发回来
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        int max_fd = 0;
+        for(int i = 0; i < num_players; i++){
+            FD_SET(player_fds[i], &read_fds);
+            if(player_fds[i] > max_fd) max_fd = player_fds[i];
+        }
+        select(max_fd + 1, &read_fds, NULL, NULL, NULL);
+
+        //从发回potato的player那里收potato
+        for(int i = 0; i < num_players; i++){
+            if (FD_ISSET(player_fds[i], &read_fds)) {
+                recv(player_fds[i], &potato, sizeof(potato), MSG_WAITALL);
+                break;
+            }
+        }
+
+        //print trace
+        cout << "Trace of potato:" << endl;
+        for (int i = 0; i < potato.count; i++) {
+          if (i > 0) cout << ",";
+          cout << potato.trace[i];
+        }
+        cout << endl;
+
+
+        Potato shutdown;
+        shutdown.hops = -1;
+        for (int i = 0; i < num_players; i++) {
+            send(player_fds[i], &shutdown, sizeof(shutdown), 0);
+        }
+    }
+
+
+    
     for(int i = 0; i < num_players; i++){
         close(player_fds[i]);
     }
