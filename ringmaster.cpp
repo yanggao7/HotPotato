@@ -84,6 +84,9 @@ int main(int argc, char * argv[]){
 
     //用数组保存每个player的socket fd
     int player_fds[num_players];
+    char player_hosts[num_players][256];
+    int player_ports[num_players];
+
     for(int i = 0; i < num_players; i++){
         struct sockaddr_in player_addr;
         socklen_t addr_len = sizeof(player_addr);
@@ -92,20 +95,31 @@ int main(int argc, char * argv[]){
         player_fds[i] = accept(server_fd, (struct sockaddr *)&player_addr, &addr_len);
         if(player_fds[i] < 0){
             cerr << "Error: accept failed" << endl;
+            return 1;
         }
 
-        //把player的ID和总人数发给这个player
         int player_id = i;
         //send第一个参数：目标socket_fd，第二个：数据的指针，可以发任何类型，只要接收方知道格式；第三个：数据大小（字节数）；第四个flags,通常传0
         send(player_fds[i], &player_id, sizeof(player_id), 0);
         send(player_fds[i], &num_players, sizeof(num_players), 0);
 
+        // 接收 player 的 hostname 和监听端口
+        recv(player_fds[i], player_hosts[i], sizeof(player_hosts[i]), MSG_WAITALL);
+        recv(player_fds[i], &player_ports[i], sizeof(player_ports[i]), MSG_WAITALL);
+
         cout << "Player " << i << " is ready to play" << endl;
     }
 
-    //TODO:环形连接、发potato等
+    // 把每个 player 的右邻居信息发给它
+    // player i 的右邻居是 player (i+1) % N
+    for(int i = 0; i < num_players; i++){
+        int right = (i + 1) % num_players;
+        send(player_fds[i], player_hosts[right], sizeof(player_hosts[right]), 0);
+        send(player_fds[i], &player_ports[right], sizeof(player_ports[right]), 0);
+    }
 
-    //清理：关闭所有socket
+    //TODO: 发 potato、等待结果、关闭
+
     for(int i = 0; i < num_players; i++){
         close(player_fds[i]);
     }
