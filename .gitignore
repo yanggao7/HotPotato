@@ -2,3 +2,14 @@ Notes.md
 
 Homework3-Programming.pdf
 
+ringmaster
+player
+*.o
+
+*.dSYM/
+.DS_Store
+
+.vscode/
+
+.cursor/
+

@@ -1,4 +1,4 @@
-//理解这个makefile文件
+# 理解这个makefile文件
 all: ringmaster plyaer
 
 ringmaster: ringmaster.cpp potato.h
